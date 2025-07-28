@@ -582,14 +582,16 @@ function closedSetBackground() {
 }
 
 function openTgSetting() {
-  tgBotStatus.value = setting.value.tgBotStatus
-  tgBotToken.value = setting.value.tgBotToken
-  tgChatId.value = []
-  if (setting.value.tgChatId) {
-    const list = setting.value.tgChatId.split(',')
-    tgChatId.value.push(...list)
-  }
-  tgSettingShow.value = true
+    tgBotStatus.value = setting.value.tgBotStatus;
+    tgBotToken.value = setting.value.tgBotToken;
+    tgChatId.value = [];
+    // Add a check to ensure setting.value.tgChatId is a string before splitting
+    if (setting.value.tgChatId && typeof setting.value.tgChatId === 'string') {
+        const list = setting.value.tgChatId.split(',');
+        // Filter out any empty strings that might result from splitting
+        tgChatId.value.push(...list.filter(item => item));
+    }
+    tgSettingShow.value = true;
 }
 
 function openResendList() {
