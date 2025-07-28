@@ -174,7 +174,6 @@ ${params.text || emailUtils.htmlToText(params.content) || ''}
 
 			await Promise.all(tgChatIds.map(async chatIdStr => {
 				try {
-                    // --- Final Corrected Parsing Logic ---
                     let chatId = chatIdStr;
                     let topicId = null;
 
@@ -182,7 +181,6 @@ ${params.text || emailUtils.htmlToText(params.content) || ''}
                         const parts = chatIdStr.split('/');
                         chatId = parts[0];
                         if (parts.length > 1 && parts[1]) {
-                            // Convert topicId to a number
                             topicId = parseInt(parts[1], 10);
                         }
                     } else {
@@ -191,7 +189,6 @@ ${params.text || emailUtils.htmlToText(params.content) || ''}
                             chatId = chatIdStr.substring(0, lastHyphenIndex);
                             const topicIdStr = chatIdStr.substring(lastHyphenIndex + 1);
                             if (topicIdStr) {
-                                // Convert topicId to a number
                                 topicId = parseInt(topicIdStr, 10);
                             }
                         }
@@ -203,11 +200,9 @@ ${params.text || emailUtils.htmlToText(params.content) || ''}
                         text: tgMessage
                     };
 
-                    // Check if topicId is a valid number before adding
                     if (topicId && !isNaN(topicId)) {
                         payload.message_thread_id = topicId;
                     }
-                    // --- Logic Ends ---
 
 					const res = await fetch(`https://api.telegram.org/bot${tgBotToken}/sendMessage`, {
 						method: 'POST',
@@ -216,9 +211,13 @@ ${params.text || emailUtils.htmlToText(params.content) || ''}
 						},
 						body: JSON.stringify(payload)
 					});
+                    
 					if (!res.ok) {
+                        // --- THIS IS THE CRITICAL CHANGE FOR BETTER LOGGING ---
 						console.error(`转发 Telegram 失败: chatId=${chatIdStr}, 状态码=${res.status}, 返回信息=${await res.text()}`);
-					}
+					} else {
+                        console.log(`转发 Telegram 成功: chatId=${chatIdStr}`);
+                    }
 				} catch (e) {
 					console.error(`转发 Telegram 失败: chatId=${chatIdStr}`, e);
 				}
