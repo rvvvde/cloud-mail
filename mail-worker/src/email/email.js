@@ -159,7 +159,7 @@ export async function email(message, env, ctx) {
 		}
 
 
-if (tgBotStatus === settingConst.tgBotStatus.OPEN && tgChatId) {
+		if (tgBotStatus === settingConst.tgBotStatus.OPEN && tgChatId) {
 
 			const tgMessage = `<b>${params.subject}</b>
 
@@ -172,54 +172,24 @@ ${params.text || emailUtils.htmlToText(params.content) || ''}
 
 			const tgChatIds = tgChatId.split(',');
 
-			await Promise.all(tgChatIds.map(async chatIdStr => {
+			await Promise.all(tgChatIds.map(async chatId => {
 				try {
-                    let chatId = chatIdStr;
-                    let topicId = null;
-
-                    if (chatIdStr.includes('/')) {
-                        const parts = chatIdStr.split('/');
-                        chatId = parts[0];
-                        if (parts.length > 1 && parts[1]) {
-                            topicId = parseInt(parts[1], 10);
-                        }
-                    } else {
-                        const lastHyphenIndex = chatIdStr.lastIndexOf('-');
-                        if (lastHyphenIndex > 0) {
-                            chatId = chatIdStr.substring(0, lastHyphenIndex);
-                            const topicIdStr = chatIdStr.substring(lastHyphenIndex + 1);
-                            if (topicIdStr) {
-                                topicId = parseInt(topicIdStr, 10);
-                            }
-                        }
-                    }
-                    
-                    const payload = {
-                        chat_id: chatId,
-                        parse_mode: 'HTML',
-                        text: tgMessage
-                    };
-
-                    if (topicId && !isNaN(topicId)) {
-                        payload.message_thread_id = topicId;
-                    }
-
 					const res = await fetch(`https://api.telegram.org/bot${tgBotToken}/sendMessage`, {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json'
 						},
-						body: JSON.stringify(payload)
+						body: JSON.stringify({
+							chat_id: chatId,
+							parse_mode: 'HTML',
+							text: tgMessage
+						})
 					});
-                    
 					if (!res.ok) {
-                        // --- THIS IS THE CRITICAL CHANGE FOR BETTER LOGGING ---
-						console.error(`转发 Telegram 失败: chatId=${chatIdStr}, 状态码=${res.status}, 返回信息=${await res.text()}`);
-					} else {
-                        console.log(`转发 Telegram 成功: chatId=${chatIdStr}`);
-                    }
+						console.error(`转发 Telegram 失败: chatId=${chatId}, 状态码=${res.status}`);
+					}
 				} catch (e) {
-					console.error(`转发 Telegram 失败: chatId=${chatIdStr}`, e);
+					console.error(`转发 Telegram 失败: chatId=${chatId}`, e);
 				}
 			}));
 		}
