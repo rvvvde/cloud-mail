@@ -173,20 +173,20 @@ ${params.text || emailUtils.htmlToText(params.content) || ''}
 			const tgChatIds = tgChatId.split(',');
 
 			await Promise.all(tgChatIds.map(async chatIdStr => {
-				// 跳过无效的空值
+				// 跳过因为多余逗号等原因产生的无效空值
 				if (!chatIdStr) return;
 
 				try {
 					let chatId = chatIdStr;
 					let topicId = null;
 
-					// 使用正则表达式来精确解析ID
+					// 使用正则表达式来精确、安全地解析两种ID格式
 					const match = chatIdStr.match(/^(-?\d+)(?:[/-](\d+))?$/);
 
 					if (match) {
-						// match[1] 是群组ID, 例如 "-100123"
+						// match[1] 总是群组ID, 例如 "-100123"
 						chatId = match[1];
-						// match[2] 是话题ID (如果存在)，并转换为数字
+						// match[2] 是话题ID (如果存在)，并确保转换为数字
 						if (match[2]) {
 							topicId = parseInt(match[2], 10);
 						}
@@ -210,7 +210,7 @@ ${params.text || emailUtils.htmlToText(params.content) || ''}
 					});
 
 					if (!res.ok) {
-						// 增强日志，明确打印出Telegram返回的错误信息
+						// 增强日志，明确打印出Telegram返回的错误信息，方便未来排查
 						const errorText = await res.text();
 						console.error(`转发 Telegram 失败: Input=${chatIdStr}, Status=${res.status}, Response=${errorText}`);
 					}
