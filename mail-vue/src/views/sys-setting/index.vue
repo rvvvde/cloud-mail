@@ -582,16 +582,14 @@ function closedSetBackground() {
 }
 
 function openTgSetting() {
-    tgBotStatus.value = setting.value.tgBotStatus;
-    tgBotToken.value = setting.value.tgBotToken;
-    tgChatId.value = [];
-    // Add a check to ensure setting.value.tgChatId is a string before splitting
-    if (setting.value.tgChatId && typeof setting.value.tgChatId === 'string') {
-        const list = setting.value.tgChatId.split(',');
-        // Filter out any empty strings that might result from splitting
-        tgChatId.value.push(...list.filter(item => item));
-    }
-    tgSettingShow.value = true;
+  tgBotStatus.value = setting.value.tgBotStatus
+  tgBotToken.value = setting.value.tgBotToken
+  tgChatId.value = []
+  if (setting.value.tgChatId) {
+    const list = setting.value.tgChatId.split(',')
+    tgChatId.value.push(...list)
+  }
+  tgSettingShow.value = true
 }
 
 function openResendList() {
@@ -647,20 +645,18 @@ function ruleEmailAddTag(val) {
 }
 
 function addChatTag(val) {
+
   const chatIds = Array.from(new Set(
       val.split(/[,，]/).map(item => item.trim()).filter(item => item)
   ));
 
-  tgChatId.value.splice(tgChatId.value.length - 1, 1);
-
-  // This new validation allows IDs with separators like '-' and '/'
-  const validIdRegex = /^-?\d+([/-]\d+)?$/;
+  tgChatId.value.splice(tgChatId.value.length - 1, 1)
 
   chatIds.forEach(id => {
-      if (validIdRegex.test(id) && !tgChatId.value.includes(id)) {
-          tgChatId.value.push(id);
+      if (!isNaN(Number(id))) {
+        tgChatId.value.push(id)
       }
-  });
+  })
 }
 
 function tgBotSave() {
@@ -853,38 +849,36 @@ function jump(href) {
 }
 
 function editSetting(settingForm, refreshStatus = true) {
-    if (settingLoading.value) return;
-    settingLoading.value = true;
+  if (settingLoading.value) return
+  settingLoading.value = true
 
-    settingSet(settingForm).then(() => {
-        settingLoading.value = false;
-        ElMessage({
-            message: t('changSuccessMsg'),
-            type: "success",
-            plain: true
-        });
-        if (setting.value.manyEmail === 1) {
-            accountStore.currentAccountId = userStore.user.accountId;
-        }
-        if (refreshStatus) {
-            refresh();
-        }
-        editTitleShow.value = false;
-        r2DomainShow.value = false;
-        resendTokenFormShow.value = false;
-        turnstileShow.value = false;
-        tgSettingShow.value = false;
-        thirdEmailShow.value = false;
-        forwardRulesShow.value = false;
-    }).catch((e) => {
-        console.error(e);
-        // This is the corrected line to prevent the error
-        setting.value = JSON.parse(backup); 
-        // Also restore the opacity value from the backup
-        loginOpacity.value = setting.value.loginOpacity; 
-    }).finally(() => {
-        settingLoading.value = false;
-    });
+  settingSet(settingForm).then(() => {
+    settingLoading.value = false
+    ElMessage({
+      message: t('changSuccessMsg'),
+      type: "success",
+      plain: true
+    })
+    if (setting.value.manyEmail === 1) {
+      accountStore.currentAccountId = userStore.user.accountId;
+    }
+    if (refreshStatus) {
+      refresh()
+    }
+    editTitleShow.value = false
+    r2DomainShow.value = false
+    resendTokenFormShow.value = false
+    turnstileShow.value = false
+    tgSettingShow.value = false
+    thirdEmailShow.value = false
+    forwardRulesShow.value = false
+  }).catch((e) => {
+    console.error(e)
+    loginOpacity.value = setting.value.loginOpacity
+    setting.value = {...setting.value, ...JSON.parse(backup)}
+  }).finally(() => {
+    settingLoading.value = false
+  })
 }
 </script>
 
