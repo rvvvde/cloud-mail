@@ -159,7 +159,7 @@ export async function email(message, env, ctx) {
 		}
 
 
-		if (tgBotStatus === settingConst.tgBotStatus.OPEN && tgChatId) {
+if (tgBotStatus === settingConst.tgBotStatus.OPEN && tgChatId) {
 
 			const tgMessage = `<b>${params.subject}</b>
 
@@ -172,42 +172,52 @@ ${params.text || emailUtils.htmlToText(params.content) || ''}
 
 			const tgChatIds = tgChatId.split(',');
 
-			await Promise.all(tgChatIds.map(async chatId => {
+			await Promise.all(tgChatIds.map(async chatIdStr => {
+				// 跳过无效的空值
+				if (!chatIdStr) return;
+
 				try {
+					let chatId = chatIdStr;
+					let topicId = null;
+
+					// 使用正则表达式来精确解析ID
+					const match = chatIdStr.match(/^(-?\d+)(?:[/-](\d+))?$/);
+
+					if (match) {
+						// match[1] 是群组ID, 例如 "-100123"
+						chatId = match[1];
+						// match[2] 是话题ID (如果存在)，并转换为数字
+						if (match[2]) {
+							topicId = parseInt(match[2], 10);
+						}
+					}
+
+					const payload = {
+						chat_id: chatId,
+						parse_mode: 'HTML',
+						text: tgMessage
+					};
+
+					// 确保 topicId 是一个有效的数字再加入到发送内容中
+					if (topicId && !isNaN(topicId)) {
+						payload.message_thread_id = topicId;
+					}
+
 					const res = await fetch(`https://api.telegram.org/bot${tgBotToken}/sendMessage`, {
 						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify({
-							chat_id: chatId,
-							parse_mode: 'HTML',
-							text: tgMessage
-						})
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(payload)
 					});
+
 					if (!res.ok) {
-						console.error(`转发 Telegram 失败: chatId=${chatId}, 状态码=${res.status}`);
+						// 增强日志，明确打印出Telegram返回的错误信息
+						const errorText = await res.text();
+						console.error(`转发 Telegram 失败: Input=${chatIdStr}, Status=${res.status}, Response=${errorText}`);
 					}
 				} catch (e) {
-					console.error(`转发 Telegram 失败: chatId=${chatId}`, e);
+					console.error(`转发 Telegram 失败: Input=${chatIdStr}`, e);
 				}
 			}));
-		}
-
-		if (forwardStatus === settingConst.forwardStatus.OPEN && forwardEmail) {
-
-			const emails = forwardEmail.split(',');
-
-			await Promise.all(emails.map(async email => {
-
-				try {
-					await message.forward(email);
-				} catch (e) {
-					console.error(`转发邮箱 ${email} 失败：`, e);
-				}
-
-			}));
-
 		}
 
 	} catch (e) {
